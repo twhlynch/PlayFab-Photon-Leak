@@ -11,7 +11,7 @@ def main(photonFile, playFabFile):
     }
 
     with open("leaks.json", "w") as file:
-        json.dump(data, file)
+        json.dump(data, file, indent=4)
 
 def getPhotonServerSettings(photonFile):
 
