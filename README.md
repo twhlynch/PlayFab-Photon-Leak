@@ -4,6 +4,7 @@
 - UI
 - Web [Link](https://twhlynch.me/PlayFab-Photon-Leak)
 
+![Gif](example.gif)
 # The following regards the CMD Tool
 
 # Usage
