@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Photon & PlayFab Leaker</title>
+        <style>
+            body {
+                background-color: #222;
+                color: white;
+            }
+
+            #header {
+                font-family: Arial;
+                font-size: 16px;
+                text-align: center;
+                padding: 10px;
+            }
+            #select-button {
+                margin-inline: auto;
+            }
+            #select-button,
+            #save-button,
+            #copy-button {
+                font-family: Arial;
+                font-size: 12px;
+                color: white;
+                background-color: #333;
+                padding: 10px;
+                margin-top: 10px;
+                display: block;
+                width: 150px;
+            }
+
+            #fields-frame {
+                background-color: #222;
+                padding: 10px;
+                width: fit-content;
+                margin-inline: auto;
+            }
+
+            .label {
+                font-family: Arial;
+                font-size: 12px;
+                color: white;
+                display: inline-block;
+                width: 100px;
+            }
+
+            .value {
+                font-family: Arial;
+                font-size: 12px;
+                color: white;
+                display: inline-block;
+            }
+
+            #button-container {
+                text-align: center;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                display: none;
+            }
+
+            .message {
+                font-family: Arial;
+                font-size: 12px;
+                text-align: center;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="header">Photon & PlayFab Leaker</h1>
+        <button id="select-button">Select Files</button>
+        <div id="fields-frame"></div>
+        <div id="button-container">
+            <button id="save-button">Save</button>
+            <button id="copy-button">Copy as JSON</button>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <script>
+            function handleFileSelect(event) {
+                var fileInput = event.target;
+                var files = fileInput.files;
+                var fieldsFrame = document.getElementById("fields-frame");
+                fieldsFrame.innerHTML = "";
+                document.getElementById("button-container").style.display =
+                    "flex";
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    var reader = new FileReader();
+                    reader.onload = (function (file) {
+                        return function (e) {
+                            var fileData = new Uint8Array(e.target.result);
+                            var punValue, voiceValue, titleValue;
+
+                            if (
+                                file.name.includes(
+                                    "PhotonServerSettings-resources.assets-3654.dat"
+                                )
+                            ) {
+                                punValue = getStringFromBytes(
+                                    fileData,
+                                    0x38,
+                                    36
+                                );
+                                voiceValue = getStringFromBytes(
+                                    fileData,
+                                    0x68,
+                                    36
+                                );
+                                addField("Pun Value:", punValue, "pun");
+                                addField("Voice Value:", voiceValue, "voice");
+                            } else if (
+                                file.name.includes(
+                                    "PlayFabSharedSettings-resources.assets-3655.dat"
+                                )
+                            ) {
+                                titleValue = getStringFromBytes(
+                                    fileData,
+                                    0x3c,
+                                    5
+                                );
+                                addField("Title:", titleValue, "title");
+                            }
+                        };
+                    })(file);
+
+                    reader.readAsArrayBuffer(file);
+                }
+            }
+
+            function getStringFromBytes(bytes, offset, length) {
+                var textDecoder = new TextDecoder("utf-8");
+                var subArray = bytes.subarray(offset, offset + length);
+                var decodedString = textDecoder.decode(subArray);
+                return decodedString;
+            }
+
+            function addField(labelText, valueText, type) {
+                var fieldsFrame = document.getElementById("fields-frame");
+                var label = document.createElement("span");
+                label.className = "label";
+                label.textContent = labelText;
+                fieldsFrame.appendChild(label);
+
+                var value = document.createElement("span");
+                value.id = `${type}-value`;
+                value.className = "value";
+                value.textContent = valueText;
+                fieldsFrame.appendChild(value);
+
+                fieldsFrame.appendChild(document.createElement("br"));
+            }
+
+            function handleSave() {
+                var punValue
+                var voiceValue
+                var titleValue
+                document.getElementById("pun-value") ? punValue = document.getElementById("pun-value").innerText : punValue = "";
+                document.getElementById("voice-value") ? voiceValue = document.getElementById("voice-value").innerText : voiceValue = "";
+                document.getElementById("title-value") ? titleValue = document.getElementById("title-value").innerText : titleValue = "";
+
+                var data = {
+                    pun: punValue,
+                    voice: voiceValue,
+                    title: titleValue,
+                };
+
+                var json = JSON.stringify(data, null, 4);
+                var link = document.createElement("a");
+                link.href =
+                    "data:application/json;charset=utf-8," +
+                    encodeURIComponent(json);
+                link.download = "data.json";
+                link.click();
+
+                showMessage("File saved successfully.");
+            }
+
+            function handleCopy() {
+                var punValue
+                var voiceValue
+                var titleValue
+                document.getElementById("pun-value") ? punValue = document.getElementById("pun-value").innerText : punValue = "";
+                document.getElementById("voice-value") ? voiceValue = document.getElementById("voice-value").innerText : voiceValue = "";
+                document.getElementById("title-value") ? titleValue = document.getElementById("title-value").innerText : titleValue = "";
+
+                var data = {
+                    pun: punValue,
+                    voice: voiceValue,
+                    title: titleValue,
+                };
+
+                var json = JSON.stringify(data, null, 4);
+                navigator.clipboard.writeText(json);
+
+                showMessage("Data copied to clipboard as JSON.");
+            }
+
+            function showMessage(message) {
+                var messageElement = document.getElementById("message");
+                messageElement.innerText = message;
+            }
+
+            document
+                .getElementById("select-button")
+                .addEventListener("click", function () {
+                    var fileInput = document.createElement("input");
+                    fileInput.type = "file";
+                    fileInput.multiple = true;
+                    fileInput.accept = ".dat";
+                    fileInput.addEventListener("change", handleFileSelect);
+                    fileInput.click();
+                });
+
+            document
+                .getElementById("save-button")
+                .addEventListener("click", handleSave);
+            document
+                .getElementById("copy-button")
+                .addEventListener("click", handleCopy);
+        </script>
+    </body>
+</html>
